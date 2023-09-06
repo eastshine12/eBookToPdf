@@ -1,12 +1,16 @@
 # eBookToPdf
 E-Book PDF 추출 프로그램<br /><br />
-만든 과정 : https://eastshine12.tistory.com/55
+제작 과정 : https://eastshine12.tistory.com/55
 <br /><br /><br />
 
 
 # 프로그램 화면
 <img src="gui_image_win.png" width="500">
 <br /><br /><br />
+
+# 실행파일 위치
+eBookToPdf/dist/ebook_to_pdf.exe
+<br/><br/><br/>
 
 # 사용법
 1. '좌표 위치 클릭' 버튼 클릭 후 캡처할 영역의 좌측상단, 우측하단 좌표를 구한다.
