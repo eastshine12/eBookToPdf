@@ -13,7 +13,7 @@ from PIL import Image
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMainWindow, QVBoxLayout, \
-    QHBoxLayout
+    QHBoxLayout, QSlider
 
 
 class MainWindow(QMainWindow):
@@ -26,7 +26,9 @@ class MainWindow(QMainWindow):
         self.posX2 = 0
         self.posY2 = 0
         self.total_page = 1
+        self.speed = 0.1
         self.region = {}
+        self.file_list = []
 
         # 앱 타이틀
         self.setWindowTitle("eBookToPdf")
@@ -36,11 +38,26 @@ class MainWindow(QMainWindow):
         self.button2 = QPushButton("좌표 위치 클릭")
         self.button3 = QPushButton("PDF로 만들기")
         self.button3.setFixedSize(QSize(430, 60))
+        self.button4 = QPushButton("초기화")
 
         # 버튼 클릭 이벤트
         self.button1.clicked.connect(self.좌측상단_좌표_클릭)
         self.button2.clicked.connect(self.우측하단_좌표_클릭)
         self.button3.clicked.connect(self.btn_click)
+        self.button4.clicked.connect(self.초기화)
+
+        # 속도 slider
+        self.speed_slider = QSlider(Qt.Orientation.Horizontal)
+        self.speed_slider.setMinimum(1)
+        self.speed_slider.setMaximum(20)
+        self.speed_slider.setValue(1)
+        self.speed_slider.valueChanged.connect(self.속도_변경)
+
+        self.speed_label = QLabel(f'캡쳐 속도: {self.speed:.1f}초')
+        self.speed_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        font_speed = self.speed_label.font()
+        font_speed.setPointSize(10)
+        self.speed_label.setFont(font_speed)
 
         self.title = QLabel('E-Book PDF 생성기', self)
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -95,8 +112,14 @@ class MainWindow(QMainWindow):
         box4.addWidget(self.input2)
 
         box5 = QHBoxLayout()
-        box5.addWidget(self.stat)
-        box5.addWidget(self.sign)
+        box5.addWidget(self.speed_label)
+        box5.addWidget(self.speed_slider)
+
+
+        box6 = QHBoxLayout()
+        box6.addWidget(self.stat)
+        box6.addWidget(self.button4)
+        box6.addWidget(self.sign)
 
         # 레이아웃 설정
         layout = QVBoxLayout()
@@ -111,6 +134,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(box4)
         layout.addStretch(4)
         layout.addLayout(box5)
+        layout.addLayout(box6)
         layout.addWidget(self.button3)
 
         container = QWidget()
@@ -120,6 +144,22 @@ class MainWindow(QMainWindow):
 
         # 창 크기 고정
         self.setFixedSize(QSize(450, 320))
+
+    def 초기화(self):
+        self.num = 1
+        self.posX1 = 0
+        self.posY1 = 0
+        self.posX2 = 0
+        self.posY2 = 0
+        self.speed = 0.1
+        self.total_page = 1
+        self.region = {}
+        self.label1_1.setText('(0, 0)')
+        self.label2_1.setText('(0, 0)')
+        self.input1.clear()
+        self.input2.clear()
+        self.stat.clear()
+        self.speed_slider.setValue(1)
 
     def 좌측상단_좌표_클릭(self):
         def on_click(x, y, button, pressed):
@@ -144,6 +184,9 @@ class MainWindow(QMainWindow):
 
         with mouse.Listener(on_click=on_click) as listener:
             listener.join()
+    def 속도_변경(self):
+        self.speed = self.speed_slider.value() / 10.0
+        self.speed_label.setText(f'캡쳐 속도: {self.speed:.1f}초')
 
     def btn_click(self):
 
@@ -184,7 +227,8 @@ class MainWindow(QMainWindow):
 
             # 파일 저장
             while self.num <= self.total_page:
-                time.sleep(0.1)
+
+                time.sleep(self.speed)
 
                 # 캡쳐하기
                 with mss.mss() as sct:
@@ -203,21 +247,21 @@ class MainWindow(QMainWindow):
             self.stat.setText('PDF 변환 중..')
             path = 'pdf_images'
             # 이미지 파일 리스트
-            file_list = os.listdir(path)
-            file_list = natsort.natsorted(file_list)
+            self.file_list = os.listdir(path)
+            self.file_list = natsort.natsorted(self.file_list)
 
             # .DS_Store 파일이름 삭제
-            if '.DS_Store' in file_list:
-                del file_list[0]
+            if '.DS_Store' in self.file_list:
+                del self.file_list[0]
 
             img_list = []
 
             # PDF 첫 페이지 만들어두기
-            img_path = 'pdf_images/' + file_list[0]
+            img_path = 'pdf_images/' + self.file_list[0]
             im_buf = Image.open(img_path)
             cvt_rgb_0 = im_buf.convert('RGB')
 
-            for i in file_list:
+            for i in self.file_list:
                 img_path = 'pdf_images/' + i
                 im_buf = Image.open(img_path)
                 cvt_rgb = im_buf.convert('RGB')
@@ -236,7 +280,11 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             print('예외 발생. ', e)
-            self.stat.setText('오류가 발생했습니다. 다시 시도해주세요. ', e)
+            self.stat.setText('오류 발생. 종료 후 다시 시도해주세요.')
+
+        finally:
+            self.num = 1
+            self.file_list = []
 
 
 app = QApplication(sys.argv)
