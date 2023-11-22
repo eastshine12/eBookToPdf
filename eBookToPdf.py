@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
             if pdf_name == '':
                 pdf_name = 'default'
 
-            cvt_rgb_0.save(pdf_name+'.pdf', save_all=True, append_images=img_list)
+            cvt_rgb_0.save(pdf_name+'.pdf', save_all=True, append_images=img_list, quality=100)
             print("PDF 변환 완료!")
             self.stat.setText('PDF 변환 완료!')
             shutil.rmtree('pdf_images/')
